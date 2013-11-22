@@ -82,6 +82,10 @@ public:
     }
     status_t setDirtyRegion(Region* dirty = NULL);
 
+    virtual int32_t getSessionId(){
+        return reinterpret_cast<int>(mGraphicBufferProducer.get());
+    }
+
 protected:
     virtual ~Surface();
 
