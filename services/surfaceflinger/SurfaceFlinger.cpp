@@ -202,7 +202,7 @@ SurfaceFlinger::SurfaceFlinger()
 #endif
 #endif
 
-    property_get("debug.sf.swaprect", value, "1");
+    property_get("debug.sf.swaprect", value, SWAPRECT_DEFAULT);
     mSwapRectEnable = atoi(value) ? true:false ;
 }
 
