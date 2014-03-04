@@ -77,9 +77,6 @@
 
 #include "RenderEngine/RenderEngine.h"
 #include <cutils/compiler.h>
-#if defined(ENABLE_SWAPRECT) && defined(QCOM_BSP)
-#include "cb_swap_rect.h"
-#endif
 
 #ifdef SAMSUNG_HDMI_SUPPORT
 #include "SecTVOutService.h"
@@ -462,10 +459,35 @@ status_t SurfaceFlinger::selectEGLConfig(EGLDisplay display, EGLint nativeVisual
     err = selectConfigForAttribute(display, attribs, wantedAttribute,
         wantedAttributeValue, config);
     if (err == NO_ERROR) {
-        EGLint caveat;
-        if (eglGetConfigAttrib(display, *config, EGL_CONFIG_CAVEAT, &caveat))
-            ALOGW_IF(caveat == EGL_SLOW_CONFIG, "EGL_SLOW_CONFIG selected!");
+        goto success;
     }
+
+    // Try again without EGL_FRAMEBUFFER_TARGET_ANDROID
+    ALOGW("no suitable EGLConfig found, trying without EGL_FRAMEBUFFER_TARGET_ANDROID");
+    attribs.remove(EGL_FRAMEBUFFER_TARGET_ANDROID);
+    err = selectConfigForAttribute(display, attribs, wantedAttribute, wantedAttributeValue, config);
+    if (err == NO_ERROR) {
+        goto success;
+    }
+
+    // Try again without EGL_RECORDABLE_ANDROID
+    ALOGW("no suitable EGLConfig found, trying without EGL_RECORDABLE_ANDROID");
+    attribs.remove(EGL_RECORDABLE_ANDROID);
+    err = selectConfigForAttribute(display, attribs, wantedAttribute, wantedAttributeValue, config);
+    if (err == NO_ERROR) {
+        goto success;
+    }
+
+    // Failed to find a config
+    goto out;
+
+success:
+    EGLint caveat;
+    if (eglGetConfigAttrib(display, *config, EGL_CONFIG_CAVEAT, &caveat)) {
+        ALOGW_IF(caveat == EGL_SLOW_CONFIG, "EGL_SLOW_CONFIG selected!");
+    }
+
+out:
     return err;
 }
 
@@ -720,8 +742,13 @@ status_t SurfaceFlinger::getDisplayInfo(const sp<IBinder>& display, DisplayInfo*
     public:
         static int getEmuDensity() {
             return getDensityFromProperty("qemu.sf.lcd_density"); }
-        static int getBuildDensity()  {
-            return getDensityFromProperty("ro.sf.lcd_density"); }
+        static int getBuildDensity() {
+            int dpi = getDensityFromProperty("persist.sys.lcd_density");
+            if (dpi == 0) {
+                dpi = getDensityFromProperty("ro.sf.lcd_density");
+            }
+            return dpi;
+        }
     };
 
     if (type == DisplayDevice::DISPLAY_PRIMARY) {
@@ -3194,8 +3221,15 @@ status_t SurfaceFlinger::captureScreenImplLocked(
 
     status_t result = NO_ERROR;
     if (native_window_api_connect(window, NATIVE_WINDOW_API_EGL) == NO_ERROR) {
-        uint32_t usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN |
-                        GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
+        uint32_t usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+#ifdef USE_OPENGLES_FOR_SCREEN_CAPTURE
+        // Make sure that HW_RENDER and HW_TEXTURE flags are used regardless of useReadPixels value
+        usage |= GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
+#else
+        if (!useReadPixels) {
+            usage |= GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
+        }
+#endif
 
         int err = 0;
         err = native_window_set_buffers_dimensions(window, reqWidth, reqHeight);
@@ -3423,15 +3457,8 @@ void SurfaceFlinger::setupSwapRect()
     HWComposer& hwc(getHwComposer());
     const LayerVector& currentLayers(mDrawingState.layersSortedByZ);
     size_t count = currentLayers.size();
-#if defined(ENABLE_SWAPRECT) && defined(QCOM_BSP)
-    qdutils::cb_swap_rect::getInstance().setSwapRectFeature_on(false);
-#endif
-    hwc.setSwapRectOn(false);
-    /*
-     * swap rect is enabled if swaprect property is set
-     * and it is blit composition
-     */
-    if (mSwapRectEnable && hwc.hasBlitComposition(HWC_DISPLAY_PRIMARY)) {
+
+    if (mSwapRectEnable && hwc.hasHwcComposition(HWC_DISPLAY_PRIMARY)) {
         int  totalDirtyRects = 0;
         Region consolidateVisibleRegion;
         Rect swapDirtyRect(Rect(0,0,0,0));
@@ -3464,13 +3491,9 @@ void SurfaceFlinger::setupSwapRect()
         //If SwapRect is enabled, dirtyLayerIdx would be set to the layer's idx
         if(dirtyLayerIdx != -1)  {
             /*
-             * Create dirty layer work list to be used by HWComposer instead of
-             * visible layer work list
-             */
-#if defined(ENABLE_SWAPRECT) && defined(QCOM_BSP)
-           qdutils::cb_swap_rect::getInstance().setSwapRectFeature_on(true);
-#endif
-            hwc.setSwapRectOn(true);
+            * Create dirty layer work list to be used by HWComposer instead of
+            * visible layer work list
+            */
             hwc.setSwapRect(swapDirtyRect);
             invalidateHwcGeometry();
         }
