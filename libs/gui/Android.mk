@@ -39,6 +39,10 @@ LOCAL_SHARED_LIBRARIES := \
 	libutils \
 	liblog
 
+ifeq ($(call is-board-platform-in-list, mpq8092), true)
+    LOCAL_CFLAGS            += -DVFM_AVAILABLE
+endif
+
 # Executed only on QCOM BSPs
 ifeq ($(TARGET_USES_QCOM_BSP),true)
 ifneq ($(TARGET_QCOM_DISPLAY_VARIANT),)
@@ -48,7 +52,9 @@ else
     LOCAL_C_INCLUDES += hardware/qcom/display/$(TARGET_BOARD_PLATFORM)/libgralloc
     LOCAL_C_INCLUDES += hardware/qcom/display/$(TARGET_BOARD_PLATFORM)/libqdutils
 endif
-    LOCAL_CFLAGS += -DQCOM_BSP
+    LOCAL_C_INCLUDES        += $(TARGET_OUT_HEADERS)/vpu/
+    LOCAL_CFLAGS            += -DQCOM_BSP
+    LOCAL_SHARED_LIBRARIES  += libqdMetaData
 endif
 
 ifeq ($(BOARD_USE_MHEAP_SCREENSHOT),true)
@@ -61,6 +67,9 @@ ifeq ($(TARGET_BOARD_PLATFORM), tegra)
 	LOCAL_CFLAGS += -DDONT_USE_FENCE_SYNC
 endif
 ifeq ($(TARGET_BOARD_PLATFORM), tegra3)
+	LOCAL_CFLAGS += -DDONT_USE_FENCE_SYNC
+endif
+ifeq ($(TARGET_DOESNT_USE_FENCE_SYNC), true)
 	LOCAL_CFLAGS += -DDONT_USE_FENCE_SYNC
 endif
 ifeq ($(TARGET_TOROPLUS_RADIO), true)
