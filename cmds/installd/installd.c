@@ -592,7 +592,6 @@ int main(const int argc, const char *argv[]) {
     struct sockaddr addr;
     socklen_t alen;
     int lsocket, s, count;
-    char nfs_hack_flag[PROPERTY_VALUE_MAX];
 
     pthread_t worker_threads, signal_thread;
     pthread_attr_t pthread_custom_attr;
@@ -620,12 +619,7 @@ int main(const int argc, const char *argv[]) {
         exit(1);
     }
 
-    property_get("hack.installd.for.nfs", nfs_hack_flag, "0");
-    if(!strcmp(nfs_hack_flag, "1")) {
-        ALOGI("Will not drop the privileges of installd service since hack.installd.for.nfs=%s.\n", nfs_hack_flag);
-    }else{
-        drop_privileges();
-    }
+    drop_privileges();
 
     lsocket = android_get_control_socket(SOCKET_PATH);
     if (lsocket < 0) {

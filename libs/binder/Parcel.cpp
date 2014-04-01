@@ -683,10 +683,10 @@ status_t Parcel::writeString8(const String8& str)
 
 status_t Parcel::writeString16(const String16& str)
 {
-    return writeString16((uint16_t*)str.string(), str.size());
+    return writeString16(str.string(), str.size());
 }
 
-status_t Parcel::writeString16(const uint16_t* str, size_t len)
+status_t Parcel::writeString16(const char16_t* str, size_t len)
 {
     if (str == NULL) return writeInt32(-1);
     
@@ -1071,7 +1071,7 @@ String16 Parcel::readString16() const
 {
     size_t len;
     const char16_t* str = readString16Inplace(&len);
-    if (str) return String16(reinterpret_cast<const uint16_t*>(str), len);
+    if (str) return String16(str, len);
     ALOGE("Reading a NULL string not supported here.");
     return String16();
 }
