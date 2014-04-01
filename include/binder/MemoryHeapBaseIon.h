@@ -15,20 +15,18 @@
  * limitations under the License.
  */
 /*!
- * \file MemoryHeapIon.h
- * \brief header file for MemoryHeapIon
+ * \file MemoryHeapBaseIon.h
+ * \brief header file for MemoryHeapBaseIon
  * \author MinGu, Jeon(mingu85.jeon)
  * \date 2011/11/20
  *
  * <b>Revision History: </b>
  * - 2011/11/21 : MinGu, Jeon(mingu85.jeon)) \n
  * Initial version
- * - 2012/11/29 : MinGu, Jeon(mingu85.jeon)) \n
- * Change name
  */
 
-#ifndef ANDROID_MEMORY_HEAP_ION_H
-#define ANDROID_MEMORY_HEAP_ION_H
+#ifndef ANDROID_MEMORY_HEAP_BASE_ION_H
+#define ANDROID_MEMORY_HEAP_BASE_ION_H
 
 #include <binder/IMemory.h>
 #include <binder/MemoryHeapBase.h>
@@ -36,15 +34,15 @@
 
 namespace android {
 
-class MemoryHeapIon : public MemoryHeapBase
+class MemoryHeapBaseIon : public MemoryHeapBase
 {
 public:
     enum {
         USE_ION_FD = IMemoryHeap::USE_ION_FD
     };
-    MemoryHeapIon(size_t size, uint32_t flags = 0, char const* name = NULL);
-    MemoryHeapIon(int fd, size_t size, uint32_t flags = 0, uint32_t offset = 0);
-    ~MemoryHeapIon();
+    MemoryHeapBaseIon(size_t size, uint32_t flags = 0, char const* name = NULL);
+    MemoryHeapBaseIon(int fd, size_t size, uint32_t flags = 0, uint32_t offset = 0);
+    ~MemoryHeapBaseIon();
 private:
     int mIonClient;
 };
