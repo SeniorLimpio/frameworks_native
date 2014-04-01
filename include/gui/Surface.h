@@ -77,7 +77,9 @@ public:
     static bool isValid(const sp<Surface>& surface) {
         return surface != NULL && surface->getIGraphicBufferProducer() != NULL;
     }
-
+    virtual int32_t getSessionId(){
+        return reinterpret_cast<int>(mGraphicBufferProducer.get());
+    }
     status_t setDirtyRegion(Region* dirty = NULL);
 
 protected:
