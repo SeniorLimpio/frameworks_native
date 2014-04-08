@@ -80,7 +80,6 @@ public:
     virtual int32_t getSessionId(){
         return reinterpret_cast<int>(mGraphicBufferProducer.get());
     }
-    status_t setDirtyRegion(Region* dirty = NULL);
 
 protected:
     virtual ~Surface();
@@ -268,9 +267,6 @@ private:
 #ifdef SURFACE_SKIP_FIRST_DEQUEUE
     bool                        mDequeuedOnce;
 #endif
-
-    // mDequeueIdx will be used to store the current buffer index for a layer.
-    int mDequeueIdx;
 };
 
 }; // namespace android
