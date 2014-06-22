@@ -66,7 +66,6 @@ else
 ifeq ($(TARGET_ARCH_LOWMEM),true)
 LOCAL_CFLAGS += -DBINDER_VM_MEGABYTES=1
 endif
-endif
 
 LOCAL_LDLIBS += -lpthread
 LOCAL_MODULE := libbinder
