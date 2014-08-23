@@ -37,8 +37,12 @@ LOCAL_SHARED_LIBRARIES := \
 	libsync \
 	libui \
 	libutils \
-	libhardware \
 	liblog
+
+ifeq ($(BOARD_USES_STE_HARDWARE),true)
+LOCAL_SHARED_LIBRARIES := \
+       libhardware
+endif
 
 ifeq ($(call is-board-platform-in-list, mpq8092), true)
     LOCAL_CFLAGS            += -DVFM_AVAILABLE
